@@ -4,16 +4,16 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
-# Initialize bot and MemoryStorage
+
 bot = Bot(token="my_token")
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
-# Establish connection to the database
+
 conn = sqlite3.connect('library.db')
 cursor = conn.cursor()
 
-# Create table for books if not exists
+
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS books (
     id INTEGER PRIMARY KEY,
@@ -25,14 +25,13 @@ CREATE TABLE IF NOT EXISTS books (
 ''')
 conn.commit()
 
-# Define states for adding books
 class BookStates:
     WaitingForTitle = "waiting_for_title"
     WaitingForAuthor = "waiting_for_author"
     WaitingForDescription = "waiting_for_description"
     WaitingForGenre = "waiting_for_genre"
 
-# Handler for adding a new book
+
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     keyboard = InlineKeyboardMarkup()
@@ -77,7 +76,6 @@ async def process_genre(message: types.Message, state: FSMContext):
         data['genre'] = message.text
     await save_book(message, state)
 
-# Function to save book details into the database
 async def save_book(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         title = data['title']
@@ -89,7 +87,6 @@ async def save_book(message: types.Message, state: FSMContext):
     conn.commit()
     await message.answer("Книга успешно добавлена")
 
-# Handler for viewing all books
 @dp.callback_query_handler(lambda c: c.data == 'view_books')
 async def view_books(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
@@ -115,7 +112,6 @@ async def view_book(callback_query: types.CallbackQuery):
     book_info = f"Название: {book[0]}\nАвтор: {book[1]}\nОписание: {book[2]}\nЖанр: {book[3]}"
     await bot.send_message(callback_query.from_user.id, book_info)
 
-# Handler for searching books
 @dp.callback_query_handler(lambda c: c.data == 'search_books')
 async def search_books(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
@@ -136,7 +132,6 @@ async def process_genre(message: types.Message, state: FSMContext):
             keyboard.add(InlineKeyboardButton(text=f"{i+1}. {book[0]} - {book[1]} ({book[2]})", callback_data=callback_data))
         await message.answer("Результаты поиска:", reply_markup=keyboard)
 
-# Ensure to register the handler with the dispatcher
 dp.register_message_handler(process_genre, state=BookStates.WaitingForGenre)
 
 
@@ -152,7 +147,6 @@ async def show_book_info(callback_query: types.CallbackQuery):
     else:
         await bot.send_message(callback_query.from_user.id, "Книга не найдена")
 
-# Handler for deleting a book
 @dp.callback_query_handler(lambda c: c.data == 'delete_book')
 async def delete_book(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
